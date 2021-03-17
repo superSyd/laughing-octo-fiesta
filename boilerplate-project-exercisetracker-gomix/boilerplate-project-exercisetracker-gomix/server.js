@@ -133,14 +133,7 @@ app.post("/api/exercise/add", (req,res)=>{
     } else{
       var testDate = new Date(myDate)
 
-      if(isNaN(testDate)){
-       
-     return res.json({
-         error:"Invalid Date"
-      })
-
-
-    } else if(!isNaN(testDate)){
+      if(!isNaN(testDate)){
       // myDate = new Date(parseInt(myDate))
       year = testDate.getFullYear();
       month = testDate.getMonth() + 1;

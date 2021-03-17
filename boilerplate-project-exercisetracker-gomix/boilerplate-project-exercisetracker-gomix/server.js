@@ -1,3 +1,4 @@
+const dayjs = require('dayjs')
 const bodyParser = require('body-parser')
 const mongoose = require('mongoose')
 const express = require('express')
@@ -52,7 +53,8 @@ app.post("/api/exercise/new-user", (req,res)=>{
 
   const myUsername = req.body.username;
 
-  const myUser = new UserExercise({
+  if(myUsername){
+    const myUser = new UserExercise({
     username: myUsername,
     count: 0
   });
@@ -60,16 +62,24 @@ app.post("/api/exercise/new-user", (req,res)=>{
   myUser.save((err,data)=>{
     if(err){
 
-      res.json({
+      return res.json({
         error: "Usename in use, please use a different username"
       })
     }  
 
-    res.json({
+    return res.json({
       username: data.username,
       _id: data._id
     })
   })
+
+  } else {
+    return res.json({
+        error: "Please enter username"
+      })
+  }
+
+  
 })
 
 app.get("/api/exercise/users", (req,res)=>{
@@ -92,7 +102,7 @@ app.get("/api/exercise/users", (req,res)=>{
       
     })
 
-    res.json(userObject)
+    return res.json(userObject)
 
   })
   
@@ -115,7 +125,10 @@ app.post("/api/exercise/add", (req,res)=>{
       month = myDate.getMonth() + 1;
       date = myDate.getDate();
 
-      dateString = year + "-" + ('0' + month).slice(-2) + "-" + ('0' + date).slice(-2);
+  //    dateString = year + "-" + ('0' + month).slice(-2) + "-" + ('0' + date).slice(-2);
+
+      dateString = dayjs(myDate).format('YYYY-MM-DD');
+
 
     } else{
       var testDate = new Date(myDate)
@@ -133,7 +146,9 @@ app.post("/api/exercise/add", (req,res)=>{
       month = testDate.getMonth() + 1;
       date = testDate.getDate();
 
-      dateString = year + "-" + ('0' + month).slice(-2) + "-" + ('0' + date).slice(-2);
+     // dateString = year + "-" + ('0' + month).slice(-2) + "-" + ('0' + date).slice(-2);
+
+      dateString = dayjs(testDate).format('YYYY-MM-DD')
     }
 
     } 
@@ -220,26 +235,22 @@ var myLimitOption;
 var fromExists = false;
 var toExists = false;
 
+if(myUserID){
+
   if(myFrom != undefined || myTo != undefined){
     
     if(!isNaN(testFromDate)){
-      fromExists = true;
-       yearFrom = testFromDate.getFullYear();
-      monthFrom = testFromDate.getMonth() + 1;
-      dateFrom = testFromDate.getDate();
 
-      dateFromString = yearFrom + "-" + ('0' + monthFrom).slice(-2) + "-" + ('0' + dateFrom).slice(-2);
+      fromExists = true;
+
+      dateFromString = dayjs(testFromDate).format('YYYY-MM-DD')
 
     }
     
     if (!isNaN(testToDate)){
-      // myDate = new Date(parseInt(myDate))
      toExists = true;
-      yearTo = testToDate.getFullYear();
-      monthTo = testToDate.getMonth() + 1;
-      dateTo = testToDate.getDate();
 
-      dateToString = yearTo + "-" + ('0' + monthTo).slice(-2) + "-" + ('0' + dateTo).slice(-2);
+      dateToString = dayjs(testToDate).format('YYYY-MM-DD')
     }
 
   }
@@ -267,23 +278,39 @@ var toExists = false;
       var myArray = data.log
 
       
+/*
+       if(myFrom == "undefined"){
+
+         if(myArray.length > 0){
+
+      dateFromString = new Date(data.log[0]["date"])
+      dateFromString = dayjs(dateFromString).format('YYYY-MM-DD')
+    }
+
+       } 
+       
+       if(myTo == "undefined"){
+    dateToString = new Date()
+      dateToString = dayjs(dateToString).format('YYYY-MM-DD')
+
+      
+       } 
+
+      
          if(dateToString == undefined){
-          if(myArray.length > 0){
 
       dateToString = new Date()
-             }
+      dateToString = dayjs(dateToString).format('YYYY-MM-DD')
+
          }
 
     if(dateFromString == undefined){
                  if(myArray.length > 0){
 
       dateFromString = new Date(data.log[0]["date"])
+      dateFromString = dayjs(dateFromString).format('YYYY-MM-DD')
     }
-    } 
-
-      
-
-     
+    }  */
 
       if(!myLimitOption){
         myLimitOption = myArray.length
@@ -312,84 +339,91 @@ var toExists = false;
     myArray = myArray.map((item)=>{
       return {
         description: item.description,
-        duration: parseInt(item.duration),
+        duration: Number(item.duration),
         date: new Date(item.date).toString().substring(0, 15)
       }
     })
 
-    if(fromExists && !toExists){
-      
-        console.log({
-      _id: data._id,
+    if(toExists && fromExists){
+
+      console.log({
+      _id: mongoose.Types.ObjectId(data._id),
       username: data.username,
       from: new Date(dateFromString).toString().substring(0, 15),
+      to: new Date(dateToString).toString().substring(0, 15),
       count: myArray.length,
       log: myArray
       })
-        return res.json({
-      _id: data._id,
+
+      return res.json({
+      _id: mongoose.Types.ObjectId(data._id),
       username: data.username,
       from: new Date(dateFromString).toString().substring(0, 15),
+      to: new Date(dateToString).toString().substring(0, 15),
       count: myArray.length,
       log: myArray
-      })
+      }) 
 
     } else if(toExists && !fromExists){
-      
-        console.log({
-      _id: data._id,
-      username: data.username,
-      to: new Date(dateToString).toString().substring(0, 15),
-      count: myArray.length,
-      log: myArray
-      })
-        return res.json({
-      _id: data._id,
-      username: data.username,
-      to: new Date(dateToString).toString().substring(0, 15),
-      count: myArray.length,
-      log: myArray
-      })
-
-    } else if(fromExists && toExists){
       console.log({
-      _id: data._id,
+      _id: mongoose.Types.ObjectId(data._id),
       username: data.username,
-      from: new Date(dateFromString).toString().substring(0, 15),
-      to: new Date(dateToString).toString().substring(0, 15),
-      count: myArray.length,
-      log: myArray
-      })
-        return res.json({
-      _id: data._id,
-      username: data.username,
-      from: new Date(dateFromString).toString().substring(0, 15),
       to: new Date(dateToString).toString().substring(0, 15),
       count: myArray.length,
       log: myArray
       })
 
+      return res.json({
+      _id: mongoose.Types.ObjectId(data._id),
+      username: data.username,
+      to: new Date(dateToString).toString().substring(0, 15),
+      count: myArray.length,
+      log: myArray
+      }) 
+    } else if(fromExists && !toExists){
+      console.log({
+      _id: mongoose.Types.ObjectId(data._id),
+      username: data.username,
+      from: new Date(dateFromString).toString().substring(0, 15),
+      count: myArray.length,
+      log: myArray
+      })
+
+      return res.json({
+      _id: mongoose.Types.ObjectId(data._id),
+      username: data.username,
+      from: new Date(dateFromString).toString().substring(0, 15),
+      count: myArray.length,
+      log: myArray
+      }) 
     } else {
       console.log({
-      _id: data._id,
+      _id: mongoose.Types.ObjectId(data._id),
       username: data.username,
       count: myArray.length,
       log: myArray
       })
-       return res.json({
-      _id: data._id,
-      username: data.username,
-      count: myArray.length,
-      log: myArray
-      })
-        
 
-    }    
+      return res.json({
+      _id: mongoose.Types.ObjectId(data._id),
+      username: data.username,
+      count: myArray.length,
+      log: myArray
+      }) 
+    }
 
     }
     
 
   })
+
+} else {
+  return res.json({
+    error: "Please enter user ID"
+  })
+}
+
+  
 
 
 })
